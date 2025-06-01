@@ -28,9 +28,8 @@ export const bibleData: BibleSection[] = [
   },
   {
     name: "Psalms",
-    totalVerses: 2461,
-    books: [
-      { name: "Psalms", chapters: Array.from({length: 150}, (_, i) => {
+    totalVerses: 2461,    books: [
+      { name: "Psalms", chapters: Array.from({length: 150}, () => {
         // Simplified - using average of 15 verses per psalm
         return 15;
       })}

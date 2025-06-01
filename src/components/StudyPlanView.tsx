@@ -1,23 +1,28 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { StudyPlan, DailyReading } from '@/types/bible';
+import { StudyPlan } from '@/types/bible';
 import { saveProgress, loadProgress } from '@/utils/studyPlanGenerator';
 
 interface StudyPlanViewProps {
   plan: StudyPlan;
   onBack: () => void;
+  initialProgress?: { [day: number]: boolean };
 }
 
-export default function StudyPlanView({ plan, onBack }: StudyPlanViewProps) {
+export default function StudyPlanView({ plan, onBack, initialProgress = {} }: StudyPlanViewProps) {
   const [progress, setProgress] = useState<{ [day: number]: boolean }>({});
   const [currentDay, setCurrentDay] = useState(1);
   const planId = `plan-${plan.duration}-days`;
-
   useEffect(() => {
-    const savedProgress = loadProgress(planId);
-    setProgress(savedProgress);
-  }, [planId]);
+    // Use initial progress if provided, otherwise load from storage
+    if (Object.keys(initialProgress).length > 0) {
+      setProgress(initialProgress);
+    } else {
+      const savedProgress = loadProgress(planId);
+      setProgress(savedProgress);
+    }
+  }, [planId, initialProgress]);
 
   const toggleDayCompletion = (day: number) => {
     const newCompleted = !progress[day];

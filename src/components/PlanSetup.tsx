@@ -4,9 +4,10 @@ import { useState } from 'react';
 
 interface PlanSetupProps {
   onCreatePlan: (duration: number) => void;
+  onShowSavedPlans: () => void;
 }
 
-export default function PlanSetup({ onCreatePlan }: PlanSetupProps) {
+export default function PlanSetup({ onCreatePlan, onShowSavedPlans }: PlanSetupProps) {
   const [duration, setDuration] = useState(90);
   const [customDuration, setCustomDuration] = useState('');
 
@@ -82,14 +83,22 @@ export default function PlanSetup({ onCreatePlan }: PlanSetupProps) {
               <li>• New Testament (Matthew to Jude)</li>
               <li>• Revelation</li>
             </ul>
+          </div>          <div className="space-y-3">
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+            >
+              Create My Study Plan
+            </button>
+            
+            <button
+              type="button"
+              onClick={onShowSavedPlans}
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors border border-gray-300"
+            >
+              Show Saved Plans
+            </button>
           </div>
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
-          >
-            Create My Study Plan
-          </button>
         </form>
       </div>
     </div>

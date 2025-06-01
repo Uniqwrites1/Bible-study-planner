@@ -1,5 +1,5 @@
 import { bibleData } from '@/data/bibleData';
-import { StudyPlan, DailyReading, ReadingPortion } from '@/types/bible';
+import { StudyPlan, DailyReading, ReadingPortion, BibleSection, BibleBook } from '@/types/bible';
 
 export function generateStudyPlan(duration: number): StudyPlan {
   const totalVerses = bibleData.reduce((sum, section) => sum + section.totalVerses, 0);
@@ -38,14 +38,14 @@ export function generateStudyPlan(duration: number): StudyPlan {
   };
 }
 
-function generateReadingPortion(section: any, startVerse: number, endVerse: number): ReadingPortion {
-  const books: any[] = [];
+function generateReadingPortion(section: BibleSection, startVerse: number, endVerse: number): ReadingPortion {
+  const books: { book: string; chapters?: number[]; verses?: string }[] = [];
   let currentVerse = 1;
-  let versesNeeded = endVerse - startVerse + 1;
+  const versesNeeded = endVerse - startVerse + 1;
   let versesCollected = 0;
 
   for (const book of section.books) {
-    let bookVerses = book.chapters.reduce((sum: number, chapterVerses: number) => sum + chapterVerses, 0);
+    const bookVerses = book.chapters.reduce((sum: number, chapterVerses: number) => sum + chapterVerses, 0);
     
     if (currentVerse + bookVerses >= startVerse && versesCollected < versesNeeded) {
       // This book contains verses we need
@@ -75,7 +75,7 @@ function generateReadingPortion(section: any, startVerse: number, endVerse: numb
   };
 }
 
-function getChaptersForVerseRange(book: any, startVerse: number, endVerse: number): number[] {
+function getChaptersForVerseRange(book: BibleBook, startVerse: number, endVerse: number): number[] {
   const chapters: number[] = [];
   let currentVerse = 1;
   
