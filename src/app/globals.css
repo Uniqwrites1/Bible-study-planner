@@ -1,26 +1,128 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+  
+  /* Light mode colors */
+  --bg-primary: 255, 255, 255;
+  --bg-secondary: 249, 250, 251;
+  --text-primary: 17, 24, 39;
+  --text-secondary: 75, 85, 99;
+  --border-color: 229, 231, 235;
+  
+  /* Bible section colors for light mode */
+  --old-testament: 139, 69, 19;
+  --new-testament: 29, 78, 216;
+  --psalms: 147, 51, 234;
+  --proverbs: 34, 197, 94;
+  --prophets: 220, 38, 127;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
+  
+  /* Dark mode colors */
+  --bg-primary: 17, 24, 39;
+  --bg-secondary: 31, 41, 55;
+  --text-primary: 243, 244, 246;
+  --text-secondary: 156, 163, 175;
+  --border-color: 75, 85, 99;
+  
+  /* Bible section colors for dark mode */
+  --old-testament: 180, 83, 9;
+  --new-testament: 59, 130, 246;
+  --psalms: 168, 85, 247;
+  --proverbs: 52, 211, 153;
+  --prophets: 236, 72, 153;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Bible section styling */
+.bible-section-old-testament {
+  border-left: 4px solid rgb(var(--old-testament));
+}
+
+.bible-section-new-testament {
+  border-left: 4px solid rgb(var(--new-testament));
+}
+
+.bible-section-psalms {
+  border-left: 4px solid rgb(var(--psalms));
+}
+
+.bible-section-proverbs {
+  border-left: 4px solid rgb(var(--proverbs));
+}
+
+.bible-section-prophets {
+  border-left: 4px solid rgb(var(--prophets));
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background-color: #374151;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #4b5563;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #6b7280;
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Custom button hover effects */
+.btn-primary {
+  background-color: #2563eb;
+  color: white;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.dark .btn-primary {
+  background-color: #3b82f6;
+}
+
+.dark .btn-primary:hover {
+  background-color: #2563eb;
+}
+
+/* Modal backdrop blur effect */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.dark .modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.7);
 }

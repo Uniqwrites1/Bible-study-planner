@@ -65,14 +65,14 @@ export default function SavedPlansManager({ onLoadPlan, onClose }: SavedPlansMan
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-black dark:bg-opacity-70 flex items-center justify-center p-4 z-50 transition-colors">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden border dark:border-gray-700 transition-colors">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Saved Bible Study Plans</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Saved Bible Study Plans</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl"
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl transition-colors"
             >
               ×
             </button>
@@ -82,31 +82,32 @@ export default function SavedPlansManager({ onLoadPlan, onClose }: SavedPlansMan
         <div className="p-6 overflow-y-auto max-h-[60vh]">
           {savedPlans.length === 0 ? (
             <div className="text-center py-12">
-              <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Saved Plans</h3>
-              <p className="text-gray-500">You haven&apos;t saved any Bible study plans yet.</p>
+              <Calendar className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Saved Plans</h3>
+              <p className="text-gray-500 dark:text-gray-400">You haven&apos;t saved any Bible study plans yet.</p>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">              {savedPlans.map((savedPlan) => {
+            <div className="grid gap-4 md:grid-cols-2">
+              {savedPlans.map((savedPlan) => {
                 const progressInfo = getProgressInfo(savedPlan, savedPlan.plan.duration);
                 
                 return (
                   <div
                     key={savedPlan.key}
-                    className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-indigo-300 transition-colors"
+                    className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                           {savedPlan.plan.duration}-Day Plan
                         </h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           Saved on {new Date(savedPlan.savedDate).toLocaleDateString()}
                         </p>
                       </div>
                       <button
                         onClick={() => handleDeletePlan(savedPlan.key)}
-                        className="text-red-400 hover:text-red-600 transition-colors"
+                        className="text-red-400 dark:text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                       >
                         <Trash2 className="h-5 w-5" />
                       </button>
@@ -114,16 +115,16 @@ export default function SavedPlansManager({ onLoadPlan, onClose }: SavedPlansMan
                     
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">Progress</span>
-                        <span className="text-sm font-bold text-indigo-600">{progressInfo.percentage}%</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Progress</span>
+                        <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{progressInfo.percentage}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                         <div
-                          className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
+                          className="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full transition-all duration-500"
                           style={{ width: `${progressInfo.percentage}%` }}
                         ></div>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         {savedPlan.sectionProgress 
                           ? `${progressInfo.completedSections || 0} of ${progressInfo.totalSections || 0} sections completed`
                           : `${progressInfo.completedDays} of ${savedPlan.plan.duration} days completed`
@@ -131,7 +132,7 @@ export default function SavedPlansManager({ onLoadPlan, onClose }: SavedPlansMan
                       </p>
                     </div>
                     
-                    <div className="flex items-center space-x-4 text-sm text-gray-600 mb-4">
+                    <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
                       <div className="flex items-center space-x-1">
                         <Clock className="h-4 w-4" />
                         <span>{savedPlan.plan.duration} days</span>
@@ -149,7 +150,7 @@ export default function SavedPlansManager({ onLoadPlan, onClose }: SavedPlansMan
                         onLoadPlan(savedPlan.plan, progressToLoad);
                         onClose();
                       }}
-                      className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center space-x-2"
+                      className="w-full bg-indigo-600 dark:bg-indigo-700 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors flex items-center justify-center space-x-2"
                     >
                       <Download className="h-4 w-4" />
                       <span>Load Plan</span>

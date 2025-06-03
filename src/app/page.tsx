@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import PlanSetup from '@/components/PlanSetup';
 import StudyPlanView from '@/components/StudyPlanView';
 import SavedPlansManager from '@/components/SavedPlansManager';
+import ThemeToggle from '@/components/ThemeToggle';
 import { generateStudyPlan } from '@/utils/studyPlanGenerator';
 import { StudyPlan, DayProgress } from '@/types/bible';
 
@@ -34,14 +35,19 @@ export default function Home() {
 
   if (!mounted) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center transition-colors">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 transition-colors">
+      {/* Theme Toggle - Fixed position */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+      
       <div className="container mx-auto px-4 py-8">
         {!currentPlan ? (
           <PlanSetup 
@@ -65,7 +71,7 @@ export default function Home() {
       </div>
       
       {/* Copyright Footer */}
-      <footer className="bg-black text-white py-6 mt-auto">
+      <footer className="bg-black dark:bg-gray-950 text-white py-6 mt-auto">
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center space-x-2 mb-2">
             <span className="text-yellow-400 font-bold text-lg">Uniqwrites</span>
