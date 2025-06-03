@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { StudyPlan, DayProgress } from '@/types/bible';
 import { saveSectionProgress, loadSectionProgress } from '@/utils/studyPlanGenerator';
 import { savePlanLocally } from '@/utils/exportUtils';
-import { Save, Check } from 'lucide-react';
+import { Save, Check, BookOpen } from 'lucide-react';
+import BibleReadingModal from './BibleReadingModal';
 
 interface StudyPlanViewProps {
   plan: StudyPlan;
@@ -16,7 +17,13 @@ export default function StudyPlanView({ plan, onBack, initialProgress = {} }: St
   const [sectionProgress, setSectionProgress] = useState<DayProgress>({});
   const [currentDay, setCurrentDay] = useState(1);
   const [isSaved, setIsSaved] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);  const [selectedReading, setSelectedReading] = useState<{
+    bookName: string;
+    chapters?: number[];
+    verses?: string;
+    sectionName: string;
+  } | null>(null);
+  const [loadingReading, setLoadingReading] = useState<string | null>(null);
   const planId = `plan-${plan.duration}-days`;
   
   useEffect(() => {
@@ -104,8 +111,7 @@ export default function StudyPlanView({ plan, onBack, initialProgress = {} }: St
       'Revelation': 'bg-yellow-100 text-yellow-800 border-yellow-200'
     };
     return colors[sectionName] || 'bg-gray-100 text-gray-800 border-gray-200';
-  };
-  const handleSavePlan = async () => {
+  };  const handleSavePlan = async () => {
     setIsLoading(true);
     try {
       savePlanLocally(plan, sectionProgress);
@@ -121,6 +127,20 @@ export default function StudyPlanView({ plan, onBack, initialProgress = {} }: St
     } finally {
       setIsLoading(false);
     }
+  };  const handleReadingClick = (bookName: string, chapters?: number[], verses?: string, sectionName?: string) => {
+    const readingKey = `${bookName}-${chapters?.join(',') || ''}-${verses || ''}`;
+    setLoadingReading(readingKey);
+    
+    // Small delay to show loading state
+    setTimeout(() => {
+      setSelectedReading({
+        bookName,
+        chapters,
+        verses,
+        sectionName: sectionName || 'Bible Reading'
+      });
+      setLoadingReading(null);
+    }, 100);
   };
 
   return (
@@ -202,7 +222,7 @@ export default function StudyPlanView({ plan, onBack, initialProgress = {} }: St
         </div>        {/* Current Day Reading */}
         {plan.dailyPlan[currentDay - 1] && (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-900">Day {currentDay} Reading</h2>
               <div className="text-sm text-gray-600">
                 {getDayCompletionStatus(currentDay) ? (
@@ -214,6 +234,14 @@ export default function StudyPlanView({ plan, onBack, initialProgress = {} }: St
                     ).length} of {Object.keys(plan.dailyPlan[currentDay - 1].sections).length} sections completed
                   </span>
                 )}
+              </div>
+            </div>            {/* Instruction for Bible reading */}
+            <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center space-x-2 text-blue-800">
+                <BookOpen className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  💡 Tip: Click on any Bible book to read the actual text in your preferred version
+                </span>
               </div>
             </div>
 
@@ -238,24 +266,44 @@ export default function StudyPlanView({ plan, onBack, initialProgress = {} }: St
                         className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
                       />
                     </label>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {portion.books.map((book, index) => (
-                      <div key={index} className="text-sm">
-                        <div className="font-medium">{book.book}</div>
-                        {book.chapters && (
-                          <div className="text-opacity-80">
-                            Chapters: {book.chapters.join(', ')}
-                          </div>
-                        )}
-                        {book.verses && (
-                          <div className="text-opacity-80">
-                            Verses: {book.verses}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                  </div>                  <div className="space-y-2">                    {portion.books.map((book, index) => {
+                      const readingKey = `${book.book}-${book.chapters?.join(',') || ''}-${book.verses || ''}`;
+                      const isLoading = loadingReading === readingKey;
+                      
+                      return (
+                        <div key={index} className="text-sm">
+                          <button
+                            onClick={() => handleReadingClick(book.book, book.chapters, book.verses, sectionName)}
+                            className="w-full text-left p-2 rounded hover:bg-white hover:bg-opacity-50 transition-colors group border border-transparent hover:border-white hover:border-opacity-30 disabled:opacity-50"
+                            title="Click to read the Bible text"
+                            disabled={isLoading}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="font-medium flex items-center space-x-2">
+                                  <span>{book.book}</span>
+                                  {isLoading ? (
+                                    <div className="h-3 w-3 border border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                  ) : (
+                                    <BookOpen className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity text-blue-600" />
+                                  )}
+                                </div>
+                                {book.chapters && (
+                                  <div className="text-opacity-80">
+                                    Chapters: {book.chapters.join(', ')}
+                                  </div>
+                                )}
+                                {book.verses && (
+                                  <div className="text-opacity-80">
+                                    Verses: {book.verses}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                   
                   <div className="mt-3 text-xs opacity-75">
@@ -322,9 +370,18 @@ export default function StudyPlanView({ plan, onBack, initialProgress = {} }: St
               <Save className="h-5 w-5 mr-3" />
             )}
             {isSaved ? 'Plan Saved!' : 'Save Plan'}
-          </button>
-        </div>
-      </div>
+          </button>        </div>
+      </div>      {/* Bible Reading Modal */}
+      {selectedReading && (
+        <BibleReadingModal
+          isOpen={!!selectedReading}
+          onClose={() => setSelectedReading(null)}
+          bookName={selectedReading.bookName}
+          chapters={selectedReading.chapters}
+          verses={selectedReading.verses}
+          sectionName={selectedReading.sectionName}
+        />
+      )}
     </div>
   );
 }
