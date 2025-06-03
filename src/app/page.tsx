@@ -63,6 +63,23 @@ export default function Home() {
           />
         )}
       </div>
+      
+      {/* Copyright Footer */}
+      <footer className="bg-black text-white py-6 mt-auto">
+        <div className="container mx-auto px-4 text-center">
+          <div className="flex items-center justify-center space-x-2 mb-2">
+            <span className="text-yellow-400 font-bold text-lg">Uniqwrites</span>
+            <span className="text-gray-300">|</span>
+            <span className="text-gray-300">Bible Study Planner</span>
+          </div>
+          <p className="text-gray-400 text-sm">
+            © {new Date().getFullYear()} Uniqwrites. All rights reserved.
+          </p>
+          <p className="text-gray-500 text-xs mt-1">
+            Empowering your spiritual journey through structured Bible reading
+          </p>
+        </div>
+      </footer>
     </main>
   );
 }

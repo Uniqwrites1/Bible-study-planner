@@ -155,11 +155,15 @@ export default function StudyPlanView({ plan, onBack, initialProgress = {} }: St
                 className="text-gray-600 hover:text-gray-900 transition-colors"
               >
                 ← Back
-              </button>
-              <div>
+              </button>              <div>
+                <div className="flex items-center space-x-2 mb-1">
+                  <span className="text-yellow-500 font-semibold text-sm">Uniqwrites</span>
+                  <span className="text-gray-400 text-sm">|</span>
+                  <span className="text-gray-600 text-sm">Bible Study</span>
+                </div>
                 <h1 className="text-2xl font-bold text-gray-900">
                   {plan.duration}-Day Bible Study Plan
-                </h1>                <p className="text-gray-600">
+                </h1><p className="text-gray-600">
                   {completedDays} of {plan.duration} days completed ({completedSections} of {totalSections} sections)
                 </p>
               </div>

@@ -13,12 +13,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bible Study Plan - Read the Bible in Your Chosen Duration",
-  description: "Create a personalized Bible study plan to read through the entire Bible in your chosen timeframe with balanced daily readings across all sections: History, Psalms, Wisdom, Prophets, New Testament, and Revelation.",
-  keywords: ["Bible study", "Bible reading plan", "Christian devotion", "Scripture", "Daily Bible reading"],
-  authors: [{ name: "Bible Study Plan App" }],
+  title: "Bible Study Plan - Read the Bible in Your Chosen Duration | Uniqwrites",
+  description: "Create a personalized Bible study plan to read through the entire Bible in your chosen timeframe with balanced daily readings across all sections: History, Psalms, Wisdom, Prophets, New Testament, and Revelation. Built by Uniqwrites.",
+  keywords: ["Bible study", "Bible reading plan", "Christian devotion", "Scripture", "Daily Bible reading", "Uniqwrites"],
+  authors: [{ name: "Uniqwrites", url: "https://uniqwrites.com" }],
+  creator: "Uniqwrites",
+  publisher: "Uniqwrites",
   icons: {
-    icon: '/favicon.ico',
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
   },
 };
 
