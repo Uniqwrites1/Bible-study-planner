@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import PlanSetup from '@/components/PlanSetup';
 import StudyPlanView from '@/components/StudyPlanView';
 import SavedPlansManager from '@/components/SavedPlansManager';
 import ThemeToggle from '@/components/ThemeToggle';
+import ClientOnly from '@/components/ClientOnly';
 import { generateStudyPlan } from '@/utils/studyPlanGenerator';
 import { StudyPlan, DayProgress } from '@/types/bible';
 
@@ -12,11 +13,6 @@ export default function Home() {
   const [currentPlan, setCurrentPlan] = useState<StudyPlan | null>(null);
   const [currentProgress, setCurrentProgress] = useState<DayProgress>({});
   const [showSavedPlans, setShowSavedPlans] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const handleCreatePlan = (duration: number) => {
     const plan = generateStudyPlan(duration);
@@ -33,19 +29,13 @@ export default function Home() {
     setCurrentPlan(null);
   };
 
-  if (!mounted) {
-    return (
-      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center transition-colors">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
-      </main>
-    );
-  }
-
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 transition-colors">
       {/* Theme Toggle - Fixed position */}
       <div className="fixed top-4 right-4 z-50">
-        <ThemeToggle />
+        <ClientOnly fallback={<div className="w-32 h-10"></div>}>
+          <ThemeToggle />
+        </ClientOnly>
       </div>
       
       <div className="container mx-auto px-4 py-8">

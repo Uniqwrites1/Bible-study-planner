@@ -13,19 +13,28 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light'); // Default to light instead of system
+  const [theme, setTheme] = useState<Theme>('light'); // Default to light to prevent hydration mismatch
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Initialize theme on client side only
   useEffect(() => {
     setMounted(true);
+    
     // Load theme from localStorage on client side
     const savedTheme = localStorage.getItem('bible-study-theme') as Theme;
     if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
       setTheme(savedTheme);
+    } else {
+      // If no saved theme, detect system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(prefersDark ? 'dark' : 'light');
     }
   }, []);  useEffect(() => {
-    if (!mounted) return; // Don't run on server side
+    if (!mounted) return; // Prevent server-side execution
+    
+    // Save theme to localStorage
+    localStorage.setItem('bible-study-theme', theme);
 
     const updateTheme = () => {
       let shouldBeDark = false;
@@ -66,15 +75,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       mediaQuery.addEventListener('change', handleChange);
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
-  }, [theme, mounted]);
-  const handleSetTheme = (newTheme: Theme) => {
-    console.log('Setting theme to:', newTheme);
+  }, [theme, mounted]);  const handleSetTheme = (newTheme: Theme) => {
     setTheme(newTheme);
-    localStorage.setItem('bible-study-theme', newTheme);
-  };
-  return (
+    // Save to localStorage only after mounting
+    if (mounted) {
+      localStorage.setItem('bible-study-theme', newTheme);
+    }
+  };return (
     <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme, isDarkMode }}>
-      {mounted ? children : <div style={{ visibility: 'hidden' }}>{children}</div>}
+      {children}
     </ThemeContext.Provider>
   );
 }

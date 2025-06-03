@@ -77,23 +77,25 @@ interface ApiBibleChapterResponse {
 class ApiBibleService {
   private baseUrl = 'https://api.scripture.api.bible/v1';
   private apiKey = process.env.NEXT_PUBLIC_API_BIBLE_KEY || '';
-  
-  // Common Bible version mappings to API.Bible IDs
+    // Common Bible version mappings to API.Bible IDs - Updated with available free versions
   private versionMappings: { [key: string]: string } = {
+    // Free versions available with API key
     'kjv': 'de4e12af7f28f599-02', // King James Version
-    'asv': 'f72b840c855f362c-04', // American Standard Version 
-    'niv': '71c6eab17ae5b667-01', // New International Version
-    'esv': '01b29f4b342acc35-01', // English Standard Version
-    'nlt': '1849868e14bea1de-02', // New Living Translation
-    'msg': '65eec8e0b60e656b-01', // The Message
-    'nasb': '49afb36a1e77eb13-01', // New American Standard Bible
-    'csb': 'bce611a49f3d81b0-01', // Christian Standard Bible
-    'amp': '825cbfa17dd6dcb5-01', // Amplified Bible
-    'nkjv': '114c1c8f6e04acfb-02', // New King James Version
-    'rsv': '40072c4a5aba4022-01', // Revised Standard Version
-    'nrsv': '7142879509583d59-01', // New Revised Standard Version
-    'web': '9f0c9b0b8b9bb4a8-01', // World English Bible
-    'bbe': 'bbe74b6a22d8b5b1-01', // Bible in Basic English
+    'asv': '685d1470fe4d5c3b-01', // American Standard Version (Byzantine Text)
+    'web': 'web-f8b77b007b1b08a8', // World English Bible (if available)
+    'bbe': 'bbe-f9c89977ba0b4d84', // Bible in Basic English (if available)
+    
+    // Premium versions (may not be available with free API key)
+    'niv': '71c6eab17ae5b667-01', // New International Version (Premium)
+    'esv': '01b29f4b342acc35-01', // English Standard Version (Premium)
+    'nlt': '1849868e14bea1de-02', // New Living Translation (Premium)
+    'msg': '65eec8e0b60e656b-01', // The Message (Premium)
+    'nasb': '49afb36a1e77eb13-01', // New American Standard Bible (Premium)
+    'csb': 'bce611a49f3d81b0-01', // Christian Standard Bible (Premium)
+    'amp': '825cbfa17dd6dcb5-01', // Amplified Bible (Premium)
+    'nkjv': '114c1c8f6e04acfb-02', // New King James Version (Premium)
+    'rsv': '40072c4a5aba4022-01', // Revised Standard Version (Premium)
+    'nrsv': '7142879509583d59-01', // New Revised Standard Version (Premium)
     'cev': 'ba11d4e34e68ee7d-01', // Contemporary English Version
     'tpt': '01f0b75396c3c8ad-01'  // The Passion Translation (if available)
   };

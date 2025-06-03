@@ -1,30 +1,23 @@
-// Working Bible API Service - Focus on APIs that actually work
+// Working Bible API Service - Only free versions that actually work
 import { BiblePassage, BibleVerse } from '@/types/bibleApi';
 
 export interface WorkingBibleVersion {
   id: string;
   name: string;
   category: string;
-  apiProvider: 'bible-api.com' | 'api.bible' | 'biblesupersearch';
+  apiProvider: 'bible-api.com';
   requiresApiKey: boolean;
   working: boolean;
 }
 
-// Only include versions that actually work
+// Only include versions that actually work from bible-api.com (all free, no API key required)
 export const WORKING_BIBLE_VERSIONS: WorkingBibleVersion[] = [
-  // Bible-API.com (Free, No API Key, WORKING)
   { id: 'kjv', name: 'King James Version', category: 'Free & Working', apiProvider: 'bible-api.com', requiresApiKey: false, working: true },
   { id: 'web', name: 'World English Bible', category: 'Free & Working', apiProvider: 'bible-api.com', requiresApiKey: false, working: true },
-  { id: 'asv', name: 'American Standard Version', category: 'Free & Working', apiProvider: 'bible-api.com', requiresApiKey: false, working: true },
+  { id: 'asv', name: 'American Standard Version (1901)', category: 'Free & Working', apiProvider: 'bible-api.com', requiresApiKey: false, working: true },
   { id: 'bbe', name: 'Bible in Basic English', category: 'Free & Working', apiProvider: 'bible-api.com', requiresApiKey: false, working: true },
-  { id: 'ylt', name: 'Young\'s Literal Translation', category: 'Free & Working', apiProvider: 'bible-api.com', requiresApiKey: false, working: true },
-  
-  // API.Bible (Free API Key Required, 2,500+ versions)
-  { id: 'niv', name: 'New International Version', category: 'Premium (Free API Key)', apiProvider: 'api.bible', requiresApiKey: true, working: true },
-  { id: 'esv', name: 'English Standard Version', category: 'Premium (Free API Key)', apiProvider: 'api.bible', requiresApiKey: true, working: true },
-  { id: 'nlt', name: 'New Living Translation', category: 'Premium (Free API Key)', apiProvider: 'api.bible', requiresApiKey: true, working: true },
-  { id: 'csb', name: 'Christian Standard Bible', category: 'Premium (Free API Key)', apiProvider: 'api.bible', requiresApiKey: true, working: true },
-  { id: 'nasb', name: 'New American Standard Bible', category: 'Premium (Free API Key)', apiProvider: 'api.bible', requiresApiKey: true, working: true }
+  { id: 'ylt', name: 'Young\'s Literal Translation (NT only)', category: 'Free & Working', apiProvider: 'bible-api.com', requiresApiKey: false, working: true },
+  { id: 'darby', name: 'Darby Bible', category: 'Free & Working', apiProvider: 'bible-api.com', requiresApiKey: false, working: true }
 ];
 
 class WorkingBibleApiService {
@@ -39,14 +32,8 @@ class WorkingBibleApiService {
     }
 
     try {
-      switch (versionInfo.apiProvider) {
-        case 'bible-api.com':
-          return await this.getBibleApiComPassage(reference, version);
-        case 'api.bible':
-          return await this.getApiBiblePassage(reference, version);
-        default:
-          return await this.getBibleApiComPassage(reference, this.defaultVersion);
-      }
+      // All versions are from bible-api.com, so use that directly
+      return await this.getBibleApiComPassage(reference, version);
     } catch (error) {
       console.error(`Error fetching ${version}:`, error);
       // Always fallback to KJV from bible-api.com
@@ -58,7 +45,15 @@ class WorkingBibleApiService {
   }
 
   private async getBibleApiComPassage(reference: string, version: string): Promise<BiblePassage> {
-    const url = `https://bible-api.com/${encodeURIComponent(reference)}?translation=${version}`;
+    // Ensure the version is supported by bible-api.com
+    const supportedVersions = ['kjv', 'web', 'asv', 'bbe', 'ylt', 'darby'];
+    const actualVersion = supportedVersions.includes(version) ? version : this.defaultVersion;
+    
+    if (actualVersion !== version) {
+      console.warn(`Version ${version} not supported by bible-api.com, using ${actualVersion}`);
+    }
+    
+    const url = `https://bible-api.com/${encodeURIComponent(reference)}?translation=${actualVersion}`;
     const response = await fetch(url);
     
     if (!response.ok) {
@@ -77,22 +72,10 @@ class WorkingBibleApiService {
         text: verse.text
       })),
       text: data.text,
-      translation_id: version.toUpperCase(),
-      translation_name: data.translation_name || WORKING_BIBLE_VERSIONS.find(v => v.id === version)?.name || version.toUpperCase(),
-      translation_note: `Retrieved from bible-api.com`
-    };  }
-
-  private async getApiBiblePassage(reference: string, version: string): Promise<BiblePassage> {
-    const apiKey = process.env.NEXT_PUBLIC_API_BIBLE_KEY;
-    
-    if (!apiKey) {
-      // Fallback to free version when no API key is available
-      return this.getBibleApiComPassage(reference, this.defaultVersion);
-    }
-    
-    // TODO: Implement API.Bible integration when API key is available
-    // For now, fallback to free service
-    return this.getBibleApiComPassage(reference, version);
+      translation_id: actualVersion.toUpperCase(),
+      translation_name: data.translation_name || WORKING_BIBLE_VERSIONS.find(v => v.id === actualVersion)?.name || actualVersion.toUpperCase(),
+      translation_note: `Retrieved from bible-api.com using ${actualVersion.toUpperCase()}`
+    };
   }
 
   getVersionInfo(version: string): WorkingBibleVersion | null {
