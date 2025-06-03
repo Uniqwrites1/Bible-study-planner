@@ -107,6 +107,7 @@ export const BOOK_MAPPINGS: { [key: string]: string } = {
 };
 
 export const BIBLE_VERSIONS: BibleVersion[] = [
+  // Classic Translations
   {
     id: 'kjv',
     name: 'King James Version',
@@ -121,6 +122,91 @@ export const BIBLE_VERSIONS: BibleVersion[] = [
     language: 'English',
     description: 'The 1901 American Standard Version'
   },
+  
+  // Contemporary Translations
+  {
+    id: 'niv',
+    name: 'New International Version',
+    abbreviation: 'NIV',
+    language: 'English',
+    description: 'Popular modern translation for clarity and accuracy'
+  },
+  {
+    id: 'esv',
+    name: 'English Standard Version',
+    abbreviation: 'ESV',
+    language: 'English',
+    description: 'Literal accuracy with readable English'
+  },
+  {
+    id: 'nlt',
+    name: 'New Living Translation',
+    abbreviation: 'NLT',
+    language: 'English',
+    description: 'Thought-for-thought translation for clarity'
+  },
+  {
+    id: 'msg',
+    name: 'The Message',
+    abbreviation: 'MSG',
+    language: 'English',
+    description: 'Contemporary paraphrase by Eugene Peterson'
+  },
+  {
+    id: 'nasb',
+    name: 'New American Standard Bible',
+    abbreviation: 'NASB',
+    language: 'English',
+    description: 'Word-for-word literal translation'
+  },
+  {
+    id: 'csb',
+    name: 'Christian Standard Bible',
+    abbreviation: 'CSB',
+    language: 'English',
+    description: 'Balance of accuracy and readability'
+  },
+  
+  // Modern Paraphrases
+  {
+    id: 'amp',
+    name: 'Amplified Bible',
+    abbreviation: 'AMP',
+    language: 'English',
+    description: 'Expanded meanings and clarifications'
+  },
+  {
+    id: 'tpt',
+    name: 'The Passion Translation',
+    abbreviation: 'TPT',
+    language: 'English',
+    description: 'Heart-level translation emphasizing God\'s love'
+  },
+  {
+    id: 'nkjv',
+    name: 'New King James Version',
+    abbreviation: 'NKJV',
+    language: 'English',
+    description: 'Updated KJV with modern English'
+  },
+  
+  // Study and Reference
+  {
+    id: 'rsv',
+    name: 'Revised Standard Version',
+    abbreviation: 'RSV',
+    language: 'English',
+    description: 'Scholarly revision of ASV'
+  },
+  {
+    id: 'nrsv',
+    name: 'New Revised Standard Version',
+    abbreviation: 'NRSV',
+    language: 'English',
+    description: 'Gender-inclusive scholarly translation'
+  },
+  
+  // Simple English
   {
     id: 'web',
     name: 'World English Bible',
@@ -134,5 +220,12 @@ export const BIBLE_VERSIONS: BibleVersion[] = [
     abbreviation: 'BBE',
     language: 'English',
     description: 'A simple English translation'
+  },
+  {
+    id: 'cev',
+    name: 'Contemporary English Version',
+    abbreviation: 'CEV',
+    language: 'English',
+    description: 'Clear and natural English'
   }
 ];
