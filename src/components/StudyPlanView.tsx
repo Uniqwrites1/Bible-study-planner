@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { StudyPlan, DayProgress } from '@/types/bible';
-import { workingBibleApi } from '@/services/workingBibleApi';
 import { saveSectionProgress, loadSectionProgress } from '@/utils/studyPlanGenerator';
 import { savePlanLocally } from '@/utils/exportUtils';
 import { Save, Check, BookOpen } from 'lucide-react';

@@ -69,7 +69,7 @@ class WorkingBibleApiService {
     
     return {
       reference: data.reference,
-      verses: data.verses.map((verse: any) => ({
+      verses: data.verses.map((verse: BibleVerse) => ({
         book_name: verse.book_name,
         book_id: verse.book_id,
         chapter: verse.chapter,
@@ -80,20 +80,19 @@ class WorkingBibleApiService {
       translation_id: version.toUpperCase(),
       translation_name: data.translation_name || WORKING_BIBLE_VERSIONS.find(v => v.id === version)?.name || version.toUpperCase(),
       translation_note: `Retrieved from bible-api.com`
-    };
-  }
+    };  }
 
   private async getApiBiblePassage(reference: string, version: string): Promise<BiblePassage> {
     const apiKey = process.env.NEXT_PUBLIC_API_BIBLE_KEY;
     
     if (!apiKey) {
-      // Fallback to free version
+      // Fallback to free version when no API key is available
       return this.getBibleApiComPassage(reference, this.defaultVersion);
     }
-
-    // API.Bible implementation would go here
-    // For now, fallback to free API
-    return this.getBibleApiComPassage(reference, this.defaultVersion);
+    
+    // TODO: Implement API.Bible integration when API key is available
+    // For now, fallback to free service
+    return this.getBibleApiComPassage(reference, version);
   }
 
   getVersionInfo(version: string): WorkingBibleVersion | null {
