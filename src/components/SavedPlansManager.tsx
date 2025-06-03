@@ -1,20 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { StudyPlan } from '@/types/bible';
+import { StudyPlan, DayProgress } from '@/types/bible';
 import { loadSavedPlans, deleteSavedPlan } from '@/utils/exportUtils';
 import { Calendar, Trash2, Download, Clock, TrendingUp } from 'lucide-react';
 
 interface SavedPlansManagerProps {
-  onLoadPlan: (plan: StudyPlan, progress: { [day: number]: boolean }) => void;
+  onLoadPlan: (plan: StudyPlan, progress: DayProgress) => void;
   onClose: () => void;
 }
 
-export default function SavedPlansManager({ onLoadPlan, onClose }: SavedPlansManagerProps) {
-  const [savedPlans, setSavedPlans] = useState<Array<{ 
+export default function SavedPlansManager({ onLoadPlan, onClose }: SavedPlansManagerProps) {  const [savedPlans, setSavedPlans] = useState<Array<{ 
     key: string; 
     plan: StudyPlan; 
-    progress: { [day: number]: boolean }; 
+    progress?: { [day: number]: boolean }; 
+    sectionProgress?: DayProgress; 
     savedDate: string 
   }>>([]);
 
@@ -27,12 +27,41 @@ export default function SavedPlansManager({ onLoadPlan, onClose }: SavedPlansMan
       deleteSavedPlan(key);
       setSavedPlans(loadSavedPlans());
     }
-  };
-
-  const getProgressInfo = (progress: { [day: number]: boolean }, totalDays: number) => {
-    const completedDays = Object.values(progress).filter(Boolean).length;
-    const percentage = Math.round((completedDays / totalDays) * 100);
-    return { completedDays, percentage };
+  };  const getProgressInfo = (savedPlan: { 
+    plan: StudyPlan; 
+    progress?: { [day: number]: boolean }; 
+    sectionProgress?: DayProgress; 
+  }, totalDays: number) => {
+    // Handle both old format (progress) and new format (sectionProgress)
+    if (savedPlan.sectionProgress) {
+      // New section-based progress
+      let completedSections = 0;
+      let totalSections = 0;
+      
+      savedPlan.plan.dailyPlan.forEach((dailyReading) => {
+        const sectionNames = Object.keys(dailyReading.sections);
+        totalSections += sectionNames.length;
+        
+        const dayProgress = savedPlan.sectionProgress![dailyReading.day];
+        if (dayProgress) {
+          sectionNames.forEach((sectionName: string) => {
+            if (dayProgress[sectionName]) {
+              completedSections++;
+            }
+          });
+        }
+      });
+      
+      const percentage = totalSections > 0 ? Math.round((completedSections / totalSections) * 100) : 0;
+      return { completedDays: Math.floor(completedSections / 6), percentage, completedSections, totalSections };
+    } else if (savedPlan.progress) {
+      // Old day-based progress
+      const completedDays = Object.values(savedPlan.progress).filter(Boolean).length;
+      const percentage = Math.round((completedDays / totalDays) * 100);
+      return { completedDays, percentage };
+    }
+    
+    return { completedDays: 0, percentage: 0 };
   };
 
   return (
@@ -58,9 +87,8 @@ export default function SavedPlansManager({ onLoadPlan, onClose }: SavedPlansMan
               <p className="text-gray-500">You haven&apos;t saved any Bible study plans yet.</p>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {savedPlans.map((savedPlan) => {
-                const { completedDays, percentage } = getProgressInfo(savedPlan.progress, savedPlan.plan.duration);
+            <div className="grid gap-4 md:grid-cols-2">              {savedPlans.map((savedPlan) => {
+                const progressInfo = getProgressInfo(savedPlan, savedPlan.plan.duration);
                 
                 return (
                   <div
@@ -87,16 +115,19 @@ export default function SavedPlansManager({ onLoadPlan, onClose }: SavedPlansMan
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-gray-700">Progress</span>
-                        <span className="text-sm font-bold text-indigo-600">{percentage}%</span>
+                        <span className="text-sm font-bold text-indigo-600">{progressInfo.percentage}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
                           className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${percentage}%` }}
+                          style={{ width: `${progressInfo.percentage}%` }}
                         ></div>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
-                        {completedDays} of {savedPlan.plan.duration} days completed
+                        {savedPlan.sectionProgress 
+                          ? `${progressInfo.completedSections || 0} of ${progressInfo.totalSections || 0} sections completed`
+                          : `${progressInfo.completedDays} of ${savedPlan.plan.duration} days completed`
+                        }
                       </p>
                     </div>
                     
@@ -113,7 +144,9 @@ export default function SavedPlansManager({ onLoadPlan, onClose }: SavedPlansMan
                     
                     <button
                       onClick={() => {
-                        onLoadPlan(savedPlan.plan, savedPlan.progress);
+                        // Handle both old and new progress formats
+                        const progressToLoad = savedPlan.sectionProgress || {};
+                        onLoadPlan(savedPlan.plan, progressToLoad);
                         onClose();
                       }}
                       className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center space-x-2"

@@ -5,11 +5,11 @@ import PlanSetup from '@/components/PlanSetup';
 import StudyPlanView from '@/components/StudyPlanView';
 import SavedPlansManager from '@/components/SavedPlansManager';
 import { generateStudyPlan } from '@/utils/studyPlanGenerator';
-import { StudyPlan } from '@/types/bible';
+import { StudyPlan, DayProgress } from '@/types/bible';
 
 export default function Home() {
   const [currentPlan, setCurrentPlan] = useState<StudyPlan | null>(null);
-  const [currentProgress, setCurrentProgress] = useState<{ [day: number]: boolean }>({});
+  const [currentProgress, setCurrentProgress] = useState<DayProgress>({});
   const [showSavedPlans, setShowSavedPlans] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -23,7 +23,7 @@ export default function Home() {
     setCurrentProgress({});
   };
 
-  const handleLoadPlan = (plan: StudyPlan, progress: { [day: number]: boolean }) => {
+  const handleLoadPlan = (plan: StudyPlan, progress: DayProgress) => {
     setCurrentPlan(plan);
     setCurrentProgress(progress);
   };

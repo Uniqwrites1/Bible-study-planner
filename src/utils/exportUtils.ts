@@ -1,13 +1,35 @@
-import { StudyPlan } from '@/types/bible';
+import { StudyPlan, DayProgress } from '@/types/bible';
 
-export function exportToPDF(plan: StudyPlan, progress: { [day: number]: boolean }) {
+function calculateSectionProgress(plan: StudyPlan, sectionProgress: DayProgress): { completedSections: number; totalSections: number } {
+  let completedSections = 0;
+  let totalSections = 0;
+  
+  plan.dailyPlan.forEach((dailyReading) => {
+    const sectionNames = Object.keys(dailyReading.sections);
+    totalSections += sectionNames.length;
+    
+    const dayProgress = sectionProgress[dailyReading.day];
+    if (dayProgress) {
+      sectionNames.forEach(sectionName => {
+        if (dayProgress[sectionName]) {
+          completedSections++;
+        }
+      });
+    }
+  });
+  
+  return { completedSections, totalSections };
+}
+
+export function exportToPDF(plan: StudyPlan, sectionProgress: DayProgress) {
   // Note: For a production app, you'd want to use a library like jsPDF or react-pdf
   // For now, we'll create a printable version
   const printWindow = window.open('', '_blank');
   if (!printWindow) return;
 
-  const completedDays = Object.values(progress).filter(Boolean).length;
-  const progressPercentage = Math.round((completedDays / plan.duration) * 100);
+  // Calculate progress based on sections
+  const { completedSections, totalSections } = calculateSectionProgress(plan, sectionProgress);
+  const progressPercentage = totalSections > 0 ? Math.round((completedSections / totalSections) * 100) : 0;
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -30,14 +52,12 @@ export function exportToPDF(plan: StudyPlan, progress: { [day: number]: boolean 
         }
       </style>
     </head>
-    <body>
-      <div class="header">
+    <body>      <div class="header">
         <h1>${plan.duration}-Day Bible Study Plan</h1>
-        <p>Progress: ${completedDays} of ${plan.duration} days completed (${progressPercentage}%)</p>
+        <p>Progress: ${completedSections} of ${totalSections} sections completed (${progressPercentage}%)</p>
         <p>Generated on: ${new Date().toLocaleDateString()}</p>
       </div>
-      
-      <div class="progress">
+        <div class="progress">
         <h3>Plan Overview</h3>
         <p>This plan will take you through the entire Bible in ${plan.duration} days with balanced daily readings from:</p>
         <ul>
@@ -48,16 +68,20 @@ export function exportToPDF(plan: StudyPlan, progress: { [day: number]: boolean 
           <li>New Testament (Matthew to Jude)</li>
           <li>Revelation</li>
         </ul>
-      </div>
-
-      ${plan.dailyPlan.map(day => `
+        <p>Progress: ${completedSections} of ${totalSections} sections completed (${progressPercentage}%)</p>
+      </div>      ${plan.dailyPlan.map(day => {
+        const dayProgress = sectionProgress[day.day] || {};
+        const dayComplete = Object.keys(day.sections).every(section => dayProgress[section] === true);
+        return `
         <div class="day">
           <div class="day-header">
-            <h3>Day ${day.day} ${progress[day.day] ? '✓ Completed' : ''}</h3>
+            <h3>Day ${day.day} ${dayComplete ? '✓ Completed' : ''}</h3>
           </div>
-          ${Object.entries(day.sections).map(([sectionName, portion]) => `
-            <div class="section ${progress[day.day] ? 'completed' : ''}">
-              <h4>${sectionName}</h4>
+          ${Object.entries(day.sections).map(([sectionName, portion]) => {
+            const sectionComplete = dayProgress[sectionName] === true;
+            return `
+            <div class="section ${sectionComplete ? 'completed' : ''}">
+              <h4>${sectionName} ${sectionComplete ? '✓' : ''}</h4>
               ${portion.books.map(book => `
                 <div class="book">${book.book}</div>
                 ${book.chapters ? `<div class="verses">Chapters: ${book.chapters.join(', ')}</div>` : ''}
@@ -65,9 +89,11 @@ export function exportToPDF(plan: StudyPlan, progress: { [day: number]: boolean 
               `).join('')}
               <div class="verses">~${portion.versesCount} verses</div>
             </div>
-          `).join('')}
+          `;
+          }).join('')}
         </div>
-      `).join('')}
+      `;
+      }).join('')}
     </body>
     </html>
   `;
@@ -77,12 +103,12 @@ export function exportToPDF(plan: StudyPlan, progress: { [day: number]: boolean 
   printWindow.print();
 }
 
-export function exportToJSON(plan: StudyPlan, progress: { [day: number]: boolean }) {
+export function exportToJSON(plan: StudyPlan, sectionProgress: DayProgress) {
   const exportData = {
     plan,
-    progress,
+    sectionProgress,
     exportDate: new Date().toISOString(),
-    version: '1.0'
+    version: '2.0'
   };
 
   const dataStr = JSON.stringify(exportData, null, 2);
@@ -98,11 +124,12 @@ export function exportToJSON(plan: StudyPlan, progress: { [day: number]: boolean
   URL.revokeObjectURL(url);
 }
 
-export function exportToCSV(plan: StudyPlan, progress: { [day: number]: boolean }) {
-  const headers = ['Day', 'Completed', 'Section', 'Books', 'Verses Count'];
+export function exportToCSV(plan: StudyPlan, sectionProgress: DayProgress) {
+  const headers = ['Day', 'Section', 'Completed', 'Books', 'Verses Count'];
   const rows = [headers.join(',')];
 
   plan.dailyPlan.forEach(day => {
+    const dayProgress = sectionProgress[day.day] || {};
     Object.entries(day.sections).forEach(([sectionName, portion]) => {
       const booksStr = portion.books.map(book => {
         let bookInfo = book.book;
@@ -113,8 +140,8 @@ export function exportToCSV(plan: StudyPlan, progress: { [day: number]: boolean 
 
       rows.push([
         day.day,
-        progress[day.day] ? 'Yes' : 'No',
         sectionName,
+        dayProgress[sectionName] ? 'Yes' : 'No',
         `"${booksStr}"`,
         portion.versesCount
       ].join(','));
@@ -154,18 +181,25 @@ export function sharePlan(plan: StudyPlan) {
   }
 }
 
-export function savePlanLocally(plan: StudyPlan, progress: { [day: number]: boolean }) {
+export function savePlanLocally(plan: StudyPlan, sectionProgress: DayProgress) {
   const planData = {
     plan,
-    progress,
+    sectionProgress,
     savedDate: new Date().toISOString()
   };
   
-  localStorage.setItem(`bible-plan-${plan.duration}-${Date.now()}`, JSON.stringify(planData));
-  return true;
+  const planKey = `bible-plan-${plan.duration}-${Date.now()}`;
+  localStorage.setItem(planKey, JSON.stringify(planData));
+  return planKey;
 }
 
-export function loadSavedPlans(): Array<{ key: string; plan: StudyPlan; progress: { [day: number]: boolean }; savedDate: string }> {
+export function loadSavedPlans(): Array<{ 
+  key: string; 
+  plan: StudyPlan; 
+  progress?: { [day: number]: boolean }; 
+  sectionProgress?: DayProgress; 
+  savedDate: string 
+}> {
   const savedPlans = [];
   
   for (let i = 0; i < localStorage.length; i++) {

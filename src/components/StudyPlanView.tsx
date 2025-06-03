@@ -1,38 +1,86 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { StudyPlan } from '@/types/bible';
-import { saveProgress, loadProgress } from '@/utils/studyPlanGenerator';
+import { StudyPlan, DayProgress } from '@/types/bible';
+import { saveSectionProgress, loadSectionProgress } from '@/utils/studyPlanGenerator';
+import { savePlanLocally } from '@/utils/exportUtils';
+import { Save, Check } from 'lucide-react';
 
 interface StudyPlanViewProps {
   plan: StudyPlan;
   onBack: () => void;
-  initialProgress?: { [day: number]: boolean };
+  initialProgress?: DayProgress;
 }
 
 export default function StudyPlanView({ plan, onBack, initialProgress = {} }: StudyPlanViewProps) {
-  const [progress, setProgress] = useState<{ [day: number]: boolean }>({});
+  const [sectionProgress, setSectionProgress] = useState<DayProgress>({});
   const [currentDay, setCurrentDay] = useState(1);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const planId = `plan-${plan.duration}-days`;
+  
   useEffect(() => {
     // Use initial progress if provided, otherwise load from storage
     if (Object.keys(initialProgress).length > 0) {
-      setProgress(initialProgress);
+      setSectionProgress(initialProgress);
     } else {
-      const savedProgress = loadProgress(planId);
-      setProgress(savedProgress);
+      const savedProgress = loadSectionProgress(planId);
+      setSectionProgress(savedProgress);
     }
   }, [planId, initialProgress]);
-
-  const toggleDayCompletion = (day: number) => {
-    const newCompleted = !progress[day];
-    const newProgress = { ...progress, [day]: newCompleted };
-    setProgress(newProgress);
-    saveProgress(planId, day, newCompleted);
+  const toggleSectionCompletion = (day: number, sectionName: string) => {
+    const currentSectionProgress = sectionProgress[day]?.[sectionName] || false;
+    const newCompleted = !currentSectionProgress;
+    
+    const newProgress = { ...sectionProgress };
+    if (!newProgress[day]) {
+      newProgress[day] = {};
+    }
+    newProgress[day][sectionName] = newCompleted;
+    
+    setSectionProgress(newProgress);
+    saveSectionProgress(planId, day, sectionName, newCompleted);
   };
 
-  const completedDays = Object.values(progress).filter(Boolean).length;
-  const progressPercentage = (completedDays / plan.duration) * 100;
+  const getDayCompletionStatus = (day: number): boolean => {
+    const dayProgress = sectionProgress[day];
+    if (!dayProgress) return false;
+    
+    const dailyReading = plan.dailyPlan[day - 1];
+    if (!dailyReading) return false;
+    
+    const sectionNames = Object.keys(dailyReading.sections);
+    return sectionNames.every(sectionName => dayProgress[sectionName] === true);
+  };
+  const getSectionCompletionCount = (): number => {
+    let completedSections = 0;
+    
+    plan.dailyPlan.forEach((dailyReading) => {
+      const sectionNames = Object.keys(dailyReading.sections);
+      
+      const dayProgress = sectionProgress[dailyReading.day];
+      if (dayProgress) {
+        sectionNames.forEach(sectionName => {
+          if (dayProgress[sectionName]) {
+            completedSections++;
+          }
+        });
+      }
+    });
+    
+    return completedSections;
+  };
+
+  const getTotalSectionCount = (): number => {
+    return plan.dailyPlan.reduce((total, dailyReading) => {
+      return total + Object.keys(dailyReading.sections).length;
+    }, 0);
+  };
+
+  const completedDays = plan.dailyPlan.filter(day => getDayCompletionStatus(day.day)).length;
+  const completedSections = getSectionCompletionCount();
+  const totalSections = getTotalSectionCount();
+  const progressPercentage = totalSections > 0 ? (completedSections / totalSections) * 100 : 0;
 
   const getSectionIcon = (sectionName: string) => {
     const icons: { [key: string]: string } = {
@@ -57,6 +105,23 @@ export default function StudyPlanView({ plan, onBack, initialProgress = {} }: St
     };
     return colors[sectionName] || 'bg-gray-100 text-gray-800 border-gray-200';
   };
+  const handleSavePlan = async () => {
+    setIsLoading(true);
+    try {
+      savePlanLocally(plan, sectionProgress);
+      setIsSaved(true);
+      
+      // Show success message for 3 seconds
+      setTimeout(() => {
+        setIsSaved(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error saving plan:', error);
+      alert('Failed to save plan. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -74,9 +139,8 @@ export default function StudyPlanView({ plan, onBack, initialProgress = {} }: St
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
                   {plan.duration}-Day Bible Study Plan
-                </h1>
-                <p className="text-gray-600">
-                  {completedDays} of {plan.duration} days completed
+                </h1>                <p className="text-gray-600">
+                  {completedDays} of {plan.duration} days completed ({completedSections} of {totalSections} sections)
                 </p>
               </div>
             </div>
@@ -135,35 +199,45 @@ export default function StudyPlanView({ plan, onBack, initialProgress = {} }: St
             onChange={(e) => setCurrentDay(parseInt(e.target.value))}
             className="w-full"
           />
-        </div>
-
-        {/* Current Day Reading */}
+        </div>        {/* Current Day Reading */}
         {plan.dailyPlan[currentDay - 1] && (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Day {currentDay} Reading</h2>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={progress[currentDay] || false}
-                  onChange={() => toggleDayCompletion(currentDay)}
-                  className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  Mark as completed
-                </span>
-              </label>
+              <div className="text-sm text-gray-600">
+                {getDayCompletionStatus(currentDay) ? (
+                  <span className="text-green-600 font-medium">✓ Day Complete</span>
+                ) : (
+                  <span>
+                    {Object.keys(plan.dailyPlan[currentDay - 1].sections).filter(
+                      sectionName => sectionProgress[currentDay]?.[sectionName]
+                    ).length} of {Object.keys(plan.dailyPlan[currentDay - 1].sections).length} sections completed
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {Object.entries(plan.dailyPlan[currentDay - 1].sections).map(([sectionName, portion]) => (
                 <div
                   key={sectionName}
-                  className={`p-4 rounded-lg border-2 ${getSectionColor(sectionName)}`}
+                  className={`p-4 rounded-lg border-2 ${getSectionColor(sectionName)} ${
+                    sectionProgress[currentDay]?.[sectionName] ? 'ring-2 ring-green-500 ring-opacity-50' : ''
+                  }`}
                 >
-                  <div className="flex items-center space-x-2 mb-3">
-                    <span className="text-lg">{getSectionIcon(sectionName)}</span>
-                    <h3 className="font-semibold">{sectionName}</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">{getSectionIcon(sectionName)}</span>
+                      <h3 className="font-semibold">{sectionName}</h3>
+                    </div>
+                    <label className="flex items-center space-x-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={sectionProgress[currentDay]?.[sectionName] || false}
+                        onChange={() => toggleSectionCompletion(currentDay, sectionName)}
+                        className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                      />
+                    </label>
                   </div>
                   
                   <div className="space-y-2">
@@ -191,9 +265,7 @@ export default function StudyPlanView({ plan, onBack, initialProgress = {} }: St
               ))}
             </div>
           </div>
-        )}
-
-        {/* All Days Overview */}
+        )}        {/* All Days Overview */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">All Days Overview</h2>
           <div className="grid grid-cols-7 gap-2 sm:grid-cols-10 lg:grid-cols-15">
@@ -202,17 +274,55 @@ export default function StudyPlanView({ plan, onBack, initialProgress = {} }: St
                 key={day.day}
                 onClick={() => setCurrentDay(day.day)}
                 className={`w-10 h-10 rounded-lg text-xs font-medium transition-all ${
-                  progress[day.day]
+                  getDayCompletionStatus(day.day)
                     ? 'bg-green-500 text-white'
                     : currentDay === day.day
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
+                title={`Day ${day.day} - ${getDayCompletionStatus(day.day) ? 'Complete' : 'In Progress'}`}
               >
                 {day.day}
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Save Plan Button */}
+        <div className="mt-6">
+          <button
+            onClick={handleSavePlan}
+            className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:opacity-50"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <svg
+                className="animate-spin h-5 w-5 mr-3 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                />
+              </svg>
+            ) : isSaved ? (
+              <Check className="h-5 w-5 mr-3" />
+            ) : (
+              <Save className="h-5 w-5 mr-3" />
+            )}
+            {isSaved ? 'Plan Saved!' : 'Save Plan'}
+          </button>
         </div>
       </div>
     </div>

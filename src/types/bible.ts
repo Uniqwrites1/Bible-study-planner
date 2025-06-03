@@ -23,6 +23,14 @@ export interface DailyReading {
   completed: boolean;
 }
 
+export interface SectionProgress {
+  [sectionName: string]: boolean;
+}
+
+export interface DayProgress {
+  [day: number]: SectionProgress;
+}
+
 export interface ReadingPortion {
   books: {
     book: string;

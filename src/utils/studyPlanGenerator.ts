@@ -1,5 +1,5 @@
 import { bibleData } from '@/data/bibleData';
-import { StudyPlan, DailyReading, ReadingPortion, BibleSection, BibleBook } from '@/types/bible';
+import { StudyPlan, DailyReading, ReadingPortion, BibleSection, BibleBook, DayProgress } from '@/types/bible';
 
 export function generateStudyPlan(duration: number): StudyPlan {
   const totalVerses = bibleData.reduce((sum, section) => sum + section.totalVerses, 0);
@@ -93,6 +93,23 @@ function getChaptersForVerseRange(book: BibleBook, startVerse: number, endVerse:
   }
   
   return chapters;
+}
+
+export function saveSectionProgress(planId: string, day: number, sectionName: string, completed: boolean): void {
+  const savedPlans = JSON.parse(localStorage.getItem('bible-study-section-progress') || '{}');
+  if (!savedPlans[planId]) {
+    savedPlans[planId] = {};
+  }
+  if (!savedPlans[planId][day]) {
+    savedPlans[planId][day] = {};
+  }
+  savedPlans[planId][day][sectionName] = completed;
+  localStorage.setItem('bible-study-section-progress', JSON.stringify(savedPlans));
+}
+
+export function loadSectionProgress(planId: string): DayProgress {
+  const savedPlans = JSON.parse(localStorage.getItem('bible-study-section-progress') || '{}');
+  return savedPlans[planId] || {};
 }
 
 export function saveProgress(planId: string, day: number, completed: boolean): void {
