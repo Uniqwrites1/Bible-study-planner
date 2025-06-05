@@ -13,10 +13,9 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light'); // Default to light to prevent hydration mismatch
+  const [theme, setTheme] = useState<Theme>('system'); // Default to system to prevent hydration mismatch
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
-
   // Initialize theme on client side only
   useEffect(() => {
     setMounted(true);
@@ -26,9 +25,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
       setTheme(savedTheme);
     } else {
-      // If no saved theme, detect system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(prefersDark ? 'dark' : 'light');
+      // Default to system preference if no saved theme
+      setTheme('system');
     }
   }, []);  useEffect(() => {
     if (!mounted) return; // Prevent server-side execution
@@ -64,6 +62,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       
       // Force re-render by updating a data attribute
       root.setAttribute('data-theme', shouldBeDark ? 'dark' : 'light');
+        // Also update CSS custom properties for immediate theme switching
+      root.style.colorScheme = shouldBeDark ? 'dark' : 'light';
     };
 
     updateTheme();
@@ -75,7 +75,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       mediaQuery.addEventListener('change', handleChange);
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
-  }, [theme, mounted]);  const handleSetTheme = (newTheme: Theme) => {
+  }, [theme, mounted]);const handleSetTheme = (newTheme: Theme) => {
     setTheme(newTheme);
     // Save to localStorage only after mounting
     if (mounted) {

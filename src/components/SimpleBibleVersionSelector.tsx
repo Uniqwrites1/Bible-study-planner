@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { WORKING_BIBLE_VERSIONS } from '@/services/workingBibleApi';
 import { ChevronDown } from 'lucide-react';
 
@@ -14,12 +15,40 @@ export default function BibleVersionSelector({
   onVersionChange 
 }: BibleVersionSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   
   const selectedVersionData = WORKING_BIBLE_VERSIONS.find(v => v.id === selectedVersion);
 
-  return (
+  // Update dropdown position when opening
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  }, [isOpen]);
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+          buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);  return (
     <div className="relative">
       <button
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-between w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
       >
@@ -34,9 +63,18 @@ export default function BibleVersionSelector({
         <ChevronDown className={`h-4 w-4 text-gray-400 dark:text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-y-auto transition-colors">
-          <div className="py-1">
+      {/* Render dropdown as portal to escape modal stacking context */}
+      {isOpen && typeof window !== 'undefined' && createPortal(
+        <div 
+          ref={dropdownRef}
+          className="fixed z-[99999] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-2xl max-h-80 overflow-y-auto transition-colors"
+          style={{ 
+            top: `${dropdownPosition.top}px`,
+            left: `${dropdownPosition.left}px`,
+            width: `${dropdownPosition.width}px`,
+            zIndex: 99999 
+          }}
+        >          <div className="py-1">
             <div>
               <div className="px-3 py-2 text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide bg-green-50 dark:bg-green-900/20 border-b border-green-200 dark:border-green-800">
                 ✅ Available Bible Versions
@@ -66,7 +104,8 @@ export default function BibleVersionSelector({
               ))}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

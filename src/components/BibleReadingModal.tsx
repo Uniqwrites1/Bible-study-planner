@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { X, BookOpen, Loader2, Plus, Minus } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { X, BookOpen, Loader2, Plus, Minus, ChevronUp } from 'lucide-react';
 import { BiblePassage, BibleVerse } from '@/types/bibleApi';
 import { workingBibleApi } from '@/services/workingBibleApi';
 import SimpleBibleVersionSelector from './SimpleBibleVersionSelector';
@@ -22,12 +22,16 @@ export default function BibleReadingModal({
   chapters,
   verses,
   sectionName
-}: BibleReadingModalProps) {
-  const [bibleContent, setBibleContent] = useState<BiblePassage | null>(null);
+}: BibleReadingModalProps) {  const [bibleContent, setBibleContent] = useState<BiblePassage | null>(null);
   const [selectedVersion, setSelectedVersion] = useState('kjv'); // Default to working version
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fontSize, setFontSize] = useState(16); // Font size in pixels
+    // Dynamic header state
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [showFloatingControls, setShowFloatingControls] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Font size options
   const fontSizeOptions = [
@@ -45,13 +49,51 @@ export default function BibleReadingModal({
       setFontSize(fontSizeOptions[currentIndex + 1].size);
     }
   };
-
   const decreaseFontSize = () => {
     const currentIndex = fontSizeOptions.findIndex(option => option.size === fontSize);
     if (currentIndex > 0) {
       setFontSize(fontSizeOptions[currentIndex - 1].size);
     }
-  };  const loadBibleContent = useCallback(async () => {
+  };
+  // Handle scroll for dynamic header
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!scrollContainerRef.current) return;
+      
+      const currentScrollY = scrollContainerRef.current.scrollTop;
+      const scrollDirection = currentScrollY > lastScrollY ? 'down' : 'up';
+      
+      // Show header when scrolling up or at the top
+      // Hide header when scrolling down and not at the top
+      if (currentScrollY <= 10) {
+        setHeaderVisible(true);
+        setShowFloatingControls(false);
+      } else if (scrollDirection === 'down' && currentScrollY > lastScrollY + 5) {
+        setHeaderVisible(false);
+        setShowFloatingControls(true);
+      } else if (scrollDirection === 'up' && lastScrollY > currentScrollY + 5) {
+        setHeaderVisible(true);
+        setShowFloatingControls(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    const scrollContainer = scrollContainerRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, [lastScrollY]);
+
+  // Reset header visibility when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setHeaderVisible(true);
+      setShowFloatingControls(false);
+      setLastScrollY(0);
+    }
+  }, [isOpen]);const loadBibleContent = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -206,12 +248,14 @@ export default function BibleReadingModal({
         <div 
           className="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 transition-opacity" 
           onClick={onClose}
-        ></div>
-
-        {/* Modal - Responsive sizing for mobile, tablet, and desktop */}
+        ></div>        {/* Modal - Responsive sizing for mobile, tablet, and desktop */}
         <div className="relative z-10 bg-white dark:bg-gray-900 rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-full h-full sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-2xl md:max-w-4xl lg:max-w-6xl xl:max-w-7xl flex flex-col border dark:border-gray-700">
-          {/* Header */}
-          <div className="bg-white dark:bg-gray-900 px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          {/* Header - with dynamic visibility */}
+          <div className={`bg-white dark:bg-gray-900 px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 transition-all duration-300 ease-in-out transform ${
+            headerVisible 
+              ? 'translate-y-0 opacity-100' 
+              : '-translate-y-full opacity-0 pointer-events-none'
+          }`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3 min-w-0 flex-1">
                 <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
@@ -259,13 +303,66 @@ export default function BibleReadingModal({
                 </button>
               </div>
             </div>
-          </div>
-
-          {/* Content */}
-          <div className="bg-gray-50 dark:bg-gray-800 flex-1 overflow-hidden flex flex-col transition-colors">
-            <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+          </div>          {/* Content */}
+          <div className="bg-gray-50 dark:bg-gray-800 flex-1 overflow-hidden flex flex-col transition-colors relative">
+            <div 
+              ref={scrollContainerRef}
+              className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6"
+            >
               {renderBibleContent()}
             </div>
+            
+            {/* Floating Controls - shown when header is hidden */}
+            {showFloatingControls && (
+              <div className="fixed top-4 right-4 z-20 flex flex-col space-y-2">
+                {/* Show Header Button */}
+                <button
+                  onClick={() => {
+                    setHeaderVisible(true);
+                    setShowFloatingControls(false);
+                    if (scrollContainerRef.current) {
+                      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
+                  className="p-3 bg-blue-600 dark:bg-blue-700 text-white rounded-full shadow-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+                  title="Show controls"
+                >
+                  <ChevronUp className="h-5 w-5" />
+                </button>
+                
+                {/* Font Size Controls */}
+                <div className="flex flex-col space-y-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border dark:border-gray-600">
+                  <button
+                    onClick={increaseFontSize}
+                    disabled={fontSize >= fontSizeOptions[fontSizeOptions.length - 1].size}
+                    className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    title="Increase font size"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                  <span className="text-xs text-center text-gray-600 dark:text-gray-400 px-1">
+                    {fontSize}
+                  </span>
+                  <button
+                    onClick={decreaseFontSize}
+                    disabled={fontSize <= fontSizeOptions[0].size}
+                    className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    title="Decrease font size"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+                </div>
+                
+                {/* Close Button */}
+                <button
+                  onClick={onClose}
+                  className="p-3 bg-gray-600 dark:bg-gray-700 text-white rounded-full shadow-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+                  title="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Footer */}
