@@ -19,12 +19,39 @@ export const metadata: Metadata = {
   keywords: ["Bible study", "Bible reading plan", "Christian devotion", "Scripture", "Daily Bible reading", "Uniqwrites"],
   authors: [{ name: "Uniqwrites", url: "https://uniqwrites.com" }],
   creator: "Uniqwrites",
-  publisher: "Uniqwrites",
-  icons: {
-    icon: '/favicon.svg',
+  publisher: "Uniqwrites",  icons: {
+    icon: [
+      { url: '/icons/icon-192x192.svg', sizes: '192x192', type: 'image/svg+xml' },
+      { url: '/icons/icon-512x512.svg', sizes: '512x512', type: 'image/svg+xml' }
+    ],
     shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
+    apple: [
+      { url: '/icons/icon-192x192.svg', sizes: '192x192', type: 'image/svg+xml' }
+    ]
   },
+  manifest: '/manifest.json',
+  themeColor: '#3b82f6',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Bible Study Plan'
+  },
+  formatDetection: {
+    telephone: false
+  },  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: 'cover'
+  },
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
+    'apple-mobile-web-app-title': 'Bible Study Plan',
+    'msapplication-TileColor': '#3b82f6',
+    'msapplication-TileImage': '/icons/icon-192x192.svg'
+  }
 };
 
 export default function RootLayout({
@@ -33,7 +60,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-300`}
         suppressHydrationWarning
@@ -41,6 +68,23 @@ export default function RootLayout({
         <ThemeProvider>
           {children}
         </ThemeProvider>
+        
+        {/* Service Worker Registration Script */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                    console.log('SW registered: ', registration);
+                  }, function(registrationError) {
+                    console.log('SW registration failed: ', registrationError);
+                  });
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );
